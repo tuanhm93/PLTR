@@ -29,16 +29,18 @@ public class MainFrame extends javax.swing.JFrame {
     private int nonSpam;
     private HashMap<String, String> trainning;
     private JFileChooser fc;
-
+    private File[] files;
     /**
      * Creates new form MainFrame
      */
     public MainFrame() {
         initComponents();
         trainning = new HashMap();
-        fc = new JFileChooser();
+        fc = new JFileChooser(); 
+        fc.setMultiSelectionEnabled(true);
         spam = 0;
         nonSpam = 0;
+        files = null;
     }
 
     /**
@@ -73,7 +75,7 @@ public class MainFrame extends javax.swing.JFrame {
         filePath.setToolTipText("URL");
         filePath.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
-        jButton1.setText("Select File");
+        jButton1.setText("Select Files");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -211,6 +213,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
                         .addComponent(jTabbedPane3)
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
@@ -241,8 +244,15 @@ public class MainFrame extends javax.swing.JFrame {
         // Chọn file
         int returnVal = fc.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = fc.getSelectedFile();
-            filePath.setText(file.getAbsolutePath());
+            files = fc.getSelectedFiles();
+            if(files.length == 1){
+                filePath.setText(files[0].getAbsolutePath());
+            }else{
+                filePath.setText("  Nhiều file đã được chọn");
+            }
+            for (int i = 0; i < files.length; i++) {
+                System.out.println(files[i].getAbsolutePath());
+            }
         } else {
             // Something smart there!
         }
@@ -265,7 +275,10 @@ public class MainFrame extends javax.swing.JFrame {
                 nonSpam = Integer.parseInt(str[1]);
                 contentTrainning.setText("Có " + spam + " bộ dữ liệu mẫu là thư rác\nCó " + nonSpam + " bộ dữ liệu mẫu là thư thường\n");
                 String inputLine = in.readLine();
+                int count = 1;
                 while (inputLine != null) {
+                    System.out.println(count++);
+                    System.out.println();
                     str = inputLine.split(" ");
                     trainning.put(str[0], str[1] + " " + str[2]);
                     String s = str[0] + ":\n"
@@ -274,7 +287,6 @@ public class MainFrame extends javax.swing.JFrame {
                     contentTrainning.setText(contentTrainning.getText() + s);
                     inputLine = in.readLine();
                 }
-
                 in.close();
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -282,47 +294,48 @@ public class MainFrame extends javax.swing.JFrame {
                 Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
-            ArrayList<String> str = Ultilities.getWords(filePath.getText());
-            contentTrainning.setText("");
+            ArrayList<String> str;
+            
             if (typeAction.getSelectedIndex() == 1) { //Nếu là thư rác
-                spam++;
-                for (int i = 0; i < str.size(); i++) {
-                    if (trainning.containsKey(str.get(i))) {
-                        String[] count = trainning.get(str.get(i)).split(" ");
-                        int newValue = Integer.parseInt(count[1]) + 1;
-                        trainning.put(str.get(i), count[0] + " " + newValue);
-                        String s = str.get(i) + ":\n"
-                                + "  Xuất hiện " + count[0] + " lần trong thư thường\n"
-                                + "  Xuất hiện " + newValue + " lần trong thư rác\n";
-                        contentTrainning.setText(contentTrainning.getText() + "\n" + s);
-                    } else {
-                        trainning.put(str.get(i), "0 1");
-                        String s = str.get(i) + ":\n"
-                                + "  Xuất hiện 0 lần trong thư thường\n"
-                                + "  Xuất hiện 1 lần trong thư rác\n";
-                        contentTrainning.setText(contentTrainning.getText() + "\n" + s);
+                
+                contentTrainning.setText("Đang trainning thư rác\n");
+                for(int j=0;j<files.length;j++){
+                    contentTrainning.setText(contentTrainning.getText()+"Đã trainning: "+(j+1) +" thư.\n");
+                    filePath.setText(files[j].getAbsolutePath());
+                    spam++;
+                    str = Ultilities.getWords(filePath.getText());
+                    for (int i = 0; i < str.size(); i++) {
+                        if (trainning.containsKey(str.get(i))) {
+                            String[] count = trainning.get(str.get(i)).split(" ");
+                            int newValue = Integer.parseInt(count[1]) + 1;
+                            trainning.put(str.get(i), count[0] + " " + newValue);
+                            
+                        } else {
+                            trainning.put(str.get(i), "0 1");
+                        }
                     }
                 }
             } else { // Nếu là thư thường
-                nonSpam++;
-                for (int i = 0; i < str.size(); i++) {
-                    if (trainning.containsKey(str.get(i))) {
-                        String[] count = trainning.get(str.get(i)).split(" ");
-                        int newValue = Integer.parseInt(count[0]) + 1;
-                        trainning.put(str.get(i), newValue + " " + count[1]);
-                        String s = str.get(i) + ":\n"
-                                + "  Xuất hiện " + newValue + " lần trong thư thường\n"
-                                + "  Xuất hiện " + count[1] + " lần trong thư rác\n";
-                        contentTrainning.setText(contentTrainning.getText() + "\n" + s);
-                    } else {
-                        trainning.put(str.get(i), "1 0");
-                        String s = str.get(i) + ":\n"
-                                + "  Xuất hiện 1 lần trong thư thường\n"
-                                + "  Xuất hiện 0 lần trong thư rác\n";
-                        contentTrainning.setText(contentTrainning.getText() + "\n" + s);
+                contentTrainning.setText("Đang trainning thư thường\n");
+                for(int j=0;j<files.length;j++){
+                    contentTrainning.setText(contentTrainning.getText()+"Đã trainning: "+ (j+1) +" thư.\n");
+                    filePath.setText(files[j].getAbsolutePath());
+                    nonSpam++;
+                    str = Ultilities.getWords(filePath.getText());
+                    for (int i = 0; i < str.size(); i++) {
+                        if (trainning.containsKey(str.get(i))) {
+                            String[] count = trainning.get(str.get(i)).split(" ");
+                            int newValue = Integer.parseInt(count[0]) + 1;
+                            trainning.put(str.get(i), newValue + " " + count[1]);
+
+                        } else {
+                            trainning.put(str.get(i), "1 0");
+                        }
                     }
                 }
             }
+            contentTrainning.setText(contentTrainning.getText()+"Done!\n");
+            System.out.println(spam+" "+nonSpam);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -364,31 +377,34 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        
         ArrayList<String> str = Ultilities.getWords(filePath.getText());
         contentTest.setText("");
         //Tính xác suất đối với thư thường
         double pNonSpam = 0;
-        for(int i=0;i<str.size();i++){
-            if(trainning.containsKey(str.get(i))){
-                double temp = Double.parseDouble(trainning.get(str.get(i)).split(" ")[0])/nonSpam;
-                if(temp != 0){
+        for (int i = 0; i < str.size(); i++) {
+            if (trainning.containsKey(str.get(i))) {
+                double temp = Double.parseDouble(trainning.get(str.get(i)).split(" ")[0]) / nonSpam;
+                if (temp != 0) {
                     pNonSpam += Math.log(temp);
                 }
+            }else{
+                
             }
         }
-        pNonSpam+=Math.log((double)nonSpam/(nonSpam+spam));
+        pNonSpam += Math.log((double) nonSpam / (nonSpam + spam));
         //Tính xác suất đối với thư rác
         double pSpam = 0;
-        for(int i=0;i<str.size();i++){
-            if(trainning.containsKey(str.get(i))){
-                double temp = Double.parseDouble(trainning.get(str.get(i)).split(" ")[1])/spam;
-                if(temp != 0){
+        for (int i = 0; i < str.size(); i++) {
+            if (trainning.containsKey(str.get(i))) {
+                double temp = Double.parseDouble(trainning.get(str.get(i)).split(" ")[1]) / spam;
+                if (temp != 0) {
                     pSpam += Math.log(temp);
                 }
             }
         }
-        pSpam+=Math.log((double)spam/(nonSpam+spam));
-        System.out.println(pNonSpam+" "+pSpam);
+        pSpam += Math.log((double) spam / (nonSpam + spam));
+        System.out.println(pNonSpam + " " + pSpam);
     }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
