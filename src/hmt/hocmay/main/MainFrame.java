@@ -383,12 +383,14 @@ public class MainFrame extends javax.swing.JFrame {
         //Tính xác suất đối với thư thường
         double pNonSpam = 0;
         for (int i = 0; i < str.size(); i++) {
-            if (trainning.containsKey(str.get(i))) {
+            if (trainning.containsKey(str.get(i))) { // có trong tập trainning
                 double temp = Double.parseDouble(trainning.get(str.get(i)).split(" ")[0]) / nonSpam;
                 if (temp != 0) {
                     pNonSpam += Math.log(temp);
+                }else{ // số lần xuất hiện  = 0
+                    
                 }
-            }else{
+            }else{ // Không có trong tập trainning
                 
             }
         }
